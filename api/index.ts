@@ -1,5 +1,5 @@
-// Vercel entry. vercel.json rewrites every path here; Hono routes it.
-import { handle } from "@hono/vercel";
+// Vercel entry. Bridges Vercel's Node (req, res) to Hono.
+import { handle } from "@hono/node-server/vercel";
 import app from "../src/app.js";
 
 export const runtime = "nodejs";
