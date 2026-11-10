@@ -3,39 +3,44 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { defineCompany, json } from "../poppy/company.js";
 
+const ROOMS = [
+  { id: "sea-view", name: "Sea View King", pricePerNight: 240, available: true },
+  { id: "garden", name: "Garden Twin", pricePerNight: 160, available: true },
+  { id: "loft", name: "Harbour Loft", pricePerNight: 310, available: false },
+] as const;
+
+// The valid room ids, so BookingRequest enumerates them and never drifts from ROOMS.
+const ROOM_IDS = ROOMS.map((r) => r.id) as [string, ...string[]];
+
 const Room = z
   .object({
-    id: z.string(),
-    name: z.string(),
-    pricePerNight: z.number(),
-    available: z.boolean(),
+    id: z.string().openapi({ example: "sea-view" }),
+    name: z.string().openapi({ example: "Sea View King" }),
+    pricePerNight: z.number().openapi({ example: 240 }),
+    available: z.boolean().openapi({ example: true }),
   })
   .openapi("Room");
 
 const Booking = z
   .object({
-    room: z.string(),
-    checkIn: z.string(),
-    nights: z.number(),
-    total: z.number(),
+    room: z.string().openapi({ example: "sea-view" }),
+    checkIn: z.string().openapi({ format: "date", example: "2026-02-01" }),
+    nights: z.number().int().openapi({ example: 2 }),
+    total: z.number().openapi({ example: 480 }),
   })
   .openapi("Booking");
 
 const BookingRequest = z
   .object({
-    room: z.string(),
-    checkIn: z.string().optional(),
-    nights: z.number().optional(),
+    room: z
+      .enum(ROOM_IDS)
+      .openapi({ example: "sea-view", description: "A room id from GET /rooms." }),
+    checkIn: z.string().optional().openapi({ format: "date", example: "2026-02-01" }),
+    nights: z.number().int().min(1).optional().openapi({ example: 2 }),
   })
   .openapi("BookingRequest");
 
 const ErrorBody = z.object({ error: z.string(), error_description: z.string() }).openapi("Error");
-
-const ROOMS = [
-  { id: "sea-view", name: "Sea View King", pricePerNight: 240, available: true },
-  { id: "garden", name: "Garden Twin", pricePerNight: 160, available: true },
-  { id: "loft", name: "Harbour Loft", pricePerNight: 310, available: false },
-];
 
 const bookings = new Map<string, z.infer<typeof Booking>[]>(); // by User ID
 
