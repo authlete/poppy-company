@@ -43,6 +43,12 @@ export const stays = defineCompany(
   {
     host: process.env.STAYS_HOST ?? "stays.poppysandbox.dev",
     name: "Stays",
+    brand: {
+      tagline: "Rooms by the water",
+      blurb: "A small collection of seaside rooms.",
+      primary: "#0f766e",
+      bg: "#faf7f1",
+    },
     scopes: [
       {
         name: "stays:read",

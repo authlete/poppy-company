@@ -5,6 +5,7 @@ import { OpenAPIHono, z } from "@hono/zod-openapi";
 import type { MiddlewareHandler } from "hono";
 import { ISSUER } from "../config.js";
 import { guardFor } from "./guard.js";
+import { landingPage, llmsTxt, robotsTxt, sitemapXml } from "./landing.js";
 import { poppyJson, protectedResource } from "./metadata.js";
 import { origin, type CompanyMeta, type Env } from "./types.js";
 
@@ -55,10 +56,17 @@ export function defineCompany(
     security: scopes.length ? [{ poppySession: [], oauth2: scopes }] : [{ poppySession: [] }],
   });
 
-  // Discovery (open, no Session): poppy.json + RFC 9728 PRM + the root hint.
+  // Discovery (open, no Session): poppy.json + RFC 9728 PRM.
   app.get("/.well-known/poppy.json", (c) => c.json(poppyJson(meta)));
   app.get("/.well-known/oauth-protected-resource", (c) => c.json(protectedResource(meta)));
-  app.get("/", (c) => c.json({ company: meta.name, discovery: "/.well-known/poppy.json" }));
+
+  // The store's public face + crawler files.
+  app.get("/", (c) => c.html(landingPage(meta)));
+  app.get("/robots.txt", (c) => c.text(robotsTxt(meta)));
+  app.get("/sitemap.xml", (c) =>
+    c.body(sitemapXml(meta), 200, { "content-type": "application/xml" }),
+  );
+  app.get("/llms.txt", (c) => c.text(llmsTxt(meta)));
 
   routes(app, protect);
 

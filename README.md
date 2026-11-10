@@ -22,11 +22,12 @@ See [AGENTS.md](./AGENTS.md) to add a module.
 ## Run locally
 
 ```sh
+cp .env.example .env   # fill in the Authlete values
 npm install
 npm run dev
 ```
 
-Set the environment first (see below). A signed-out route:
+The variables are listed below (defaults let discovery run with none set). A signed-out route:
 
 ```sh
 curl -H "Host: stays.poppysandbox.dev" http://localhost:4000/rooms

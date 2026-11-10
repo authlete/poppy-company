@@ -1,6 +1,6 @@
 // Token validation, delegated to Authlete. The Company never validates tokens itself - and when the
 // token is sender-constrained with DPoP (RFC 9449), Authlete validates the proof too, from the
-// forwarded `dpop`/`htm`/`htu`. 
+// forwarded `dpop`/`htm`/`htu`.
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { authlete } from "../config.js";
 
