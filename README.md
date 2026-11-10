@@ -35,13 +35,13 @@ curl -H "Host: stays.poppysandbox.dev" http://localhost:4000/rooms
 
 ## Environment
 
-| Variable | What |
-| --- | --- |
-| `POPPY_ISSUER` | The Authlete-powered AS, e.g. `https://auth.poppysandbox.dev`. |
-| `AUTHLETE_BASE` | Authlete API base, e.g. `https://us.authlete.com`. |
-| `AUTHLETE_SERVICE_ID` | The Authlete service backing the AS. |
-| `AUTHLETE_TOKEN` | Authlete access token for introspection. |
-| `STAYS_HOST` | The Stays host (default `stays.poppysandbox.dev`). |
+| Variable              | What                                                           |
+| --------------------- | -------------------------------------------------------------- |
+| `POPPY_ISSUER`        | The Authlete-powered AS, e.g. `https://auth.poppysandbox.dev`. |
+| `AUTHLETE_BASE`       | Authlete API base, e.g. `https://us.authlete.com`.             |
+| `AUTHLETE_SERVICE_ID` | The Authlete service backing the AS.                           |
+| `AUTHLETE_TOKEN`      | Authlete access token for introspection.                       |
+| `STAYS_HOST`          | The Stays host (default `stays.poppysandbox.dev`).             |
 
 ## Deploy (Vercel)
 

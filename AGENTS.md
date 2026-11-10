@@ -19,8 +19,18 @@ with zod schemas, so `/openapi.json` is generated and real (schemas + the scope 
        host: process.env.FOOD_HOST ?? "food.poppysandbox.dev",
        name: "Food",
        scopes: [
-         { name: "orders:read", description: "See your orders.", changes: "none", personalData: true },
-         { name: "orders:write", description: "Place an order. Each needs your approval.", changes: "irreversible", personalData: true },
+         {
+           name: "orders:read",
+           description: "See your orders.",
+           changes: "none",
+           personalData: true,
+         },
+         {
+           name: "orders:write",
+           description: "Place an order. Each needs your approval.",
+           changes: "irreversible",
+           personalData: true,
+         },
        ],
      },
      (app, protect) => {
@@ -41,7 +51,9 @@ with zod schemas, so `/openapi.json` is generated and real (schemas + the scope 
            path: "/orders",
            summary: "List your orders.",
            ...protect(["orders:read"]), // guards the route AND documents the scope
-           responses: { 200: json(z.object({ user: z.string(), orders: z.array(Order) }), "Your orders.") },
+           responses: {
+             200: json(z.object({ user: z.string(), orders: z.array(Order) }), "Your orders."),
+           },
          }),
          (c) => c.json({ user: c.get("user"), orders: [] }, 200),
        );
@@ -62,7 +74,7 @@ with zod schemas, so `/openapi.json` is generated and real (schemas + the scope 
 
 - `protect()` → signed-out (Poppy-Session only). `protect(["scope"])` → also requires a signed-in
   token with that scope (`Bearer` or DPoP-bound, validated by Authlete). It returns the guard
-  middleware *and* the OpenAPI `security`, so a scope is written in exactly one place.
+  middleware _and_ the OpenAPI `security`, so a scope is written in exactly one place.
 - Read the User ID in a handler with `c.get("user")`; read a validated body with `c.req.valid("json")`.
 - Give `c.json(...)` the status you declared in `responses` (e.g. `, 200`).
 - Don't touch `src/poppy/` to add a module - it's the shared Poppy layer (session, introspection,
