@@ -17,11 +17,8 @@ export function guardFor(meta: CompanyMeta) {
   const base = origin(meta);
   return (requiredScopes: string[] = []): MiddlewareHandler<Env> =>
     async (c, next) => {
-      // 0.4 adds a Poppy-Version header; 0.3 agents omit it. Only reject an unsupported one.
-      const version = c.req.header("poppy-version");
-      if (version && !SUPPORTED_VERSIONS.includes(version))
-        return c.json({ error: "version_unsupported", supported: SUPPORTED_VERSIONS }, 400);
-
+      // Session first: a missing or bad Poppy-Session is invalid_session even when Poppy-Version is
+      // missing too (spec 5.3), so the agent learns how to fix the Session.
       const sessionJwt = c.req.header("poppy-session");
       if (!sessionJwt)
         return c.json(
@@ -43,6 +40,12 @@ export function guardFor(meta: CompanyMeta) {
         const error = e instanceof PoppySessionError ? e.error : "invalid_session";
         return c.json({ error, error_description: String((e as Error).message) }, 400);
       }
+
+      // Then the version gate (spec 3.4): a request with the Session header carries Poppy-Version;
+      // a missing or unsupported version is version_unsupported.
+      const version = c.req.header("poppy-version");
+      if (!version || !SUPPORTED_VERSIONS.includes(version))
+        return c.json({ error: "version_unsupported", supported: SUPPORTED_VERSIONS }, 400);
 
       if (requiredScopes.length > 0) {
         const scope = requiredScopes.join(" ");

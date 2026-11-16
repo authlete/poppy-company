@@ -43,6 +43,10 @@ const PRIVATE_JWK_MEMBERS = ["d", "p", "q", "dp", "dq", "qi", "oth", "k"];
 const b64urlSha256 = (s: string) => createHash("sha256").update(s).digest("base64url");
 const isPublic = (k: Record<string, unknown>) => PRIVATE_JWK_MEMBERS.every((m) => !(m in k));
 
+// A delegation is signed with ES256 (an EC key) or PS384 (an RSA key); spec 5.2. The Session JWT it
+// vouches for is always ES256, so the delegated key (cnf.jwk) is EC P-256.
+const DELEGATION_KEY_TYPE: Record<string, string> = { ES256: "EC", PS384: "RSA" };
+
 /** Fetch the agent's CIMD and return its public keys (inline `jwks` or same-origin `jwks_uri`). */
 async function fetchClientKeys(clientId: string): Promise<any[]> {
   const u = new URL(clientId);
@@ -77,11 +81,15 @@ async function fetchClientKeys(clientId: string): Promise<any[]> {
 async function verifyDelegation(dlg: string, clientId: string, keys: any[]): Promise<any> {
   const header = decodeProtectedHeader(dlg) as any;
   if (header.typ !== "poppy-delegation+jwt") throw new PoppySessionError("bad delegation typ");
+  const keyType = DELEGATION_KEY_TYPE[header.alg];
+  if (!keyType) throw new PoppySessionError("delegation alg must be ES256 or PS384");
   const jwk = keys.find((k) => k.kid === header.kid);
   if (!jwk) throw new PoppySessionError("delegation kid not in client jwks");
-  const alg = jwk.alg ?? (jwk.kty === "RSA" ? "PS384" : "ES256");
-  const { payload } = await jwtVerify(dlg, await importJWK(jwk, alg), {
+  if (jwk.kty !== keyType)
+    throw new PoppySessionError("delegation key type does not match its alg");
+  const { payload } = await jwtVerify(dlg, await importJWK(jwk, header.alg), {
     typ: "poppy-delegation+jwt",
+    algorithms: ["ES256", "PS384"],
   });
   if (payload.iss !== clientId) throw new PoppySessionError("delegation iss != client_id");
   const iat = payload.iat ?? 0;
@@ -91,6 +99,8 @@ async function verifyDelegation(dlg: string, clientId: string, keys: any[]): Pro
   if (exp - iat > 24 * 3600 + 5) throw new PoppySessionError("delegation lifetime > 24h");
   const cnf = (payload as any).cnf?.jwk;
   if (!cnf) throw new PoppySessionError("delegation has no cnf.jwk");
+  if (cnf.kty !== "EC" || cnf.crv !== "P-256")
+    throw new PoppySessionError("cnf.jwk must be an EC P-256 key");
   if (!isPublic(cnf)) throw new PoppySessionError("cnf.jwk has private members");
   // A delegation is inert: it names no User, Agent, or Company (spec 5.2).
   for (const forbidden of ["sub", "aud", "agent_id"])
@@ -119,8 +129,11 @@ export async function verifyPoppySession(input: VerifyInput): Promise<VerifiedSe
 
   const { payload } = await jwtVerify(input.sessionJwt, await importJWK(cnfJwk, "ES256"), {
     typ: "poppy-session+jwt",
-    audience: input.companyId,
   });
+  // aud is the Company's identifier as a single string, char for char (spec 5.2 / 10.4): an array
+  // is rejected by the strict !== comparison.
+  if (payload.aud !== input.companyId)
+    throw new PoppySessionError("aud is not this Company's identifier");
 
   const htu = input.url.split(/[?#]/)[0];
   if (payload.htm !== input.method) throw new PoppySessionError("htm mismatch");
