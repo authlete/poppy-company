@@ -11,18 +11,29 @@ export const protectedResource = (meta: CompanyMeta) => ({
 });
 
 /** The Company's `poppy.json` (spec 3.1): who it is, its scopes, its issuer, and its API. */
-export const poppyJson = (meta: CompanyMeta) => ({
-  protocol_version: PROTOCOL_VERSION,
-  supported_versions: Object.fromEntries(
-    SUPPORTED_VERSIONS.map((v) => [v, `${origin(meta)}/.well-known/poppy.json`]),
-  ),
-  organization: { name: meta.name, domain: meta.host },
-  auth: {
-    issuer: ISSUER,
-    scopes: Object.fromEntries(meta.scopes.map((s) => [s.name, s.description])),
-    scope_hints: Object.fromEntries(
-      meta.scopes.map((s) => [s.name, { changes: s.changes, personal_data: s.personalData }]),
-    ),
-  },
-  apis: [{ type: "openapi", url: `${origin(meta)}/openapi.json`, description: `${meta.name} API` }],
-});
+export const poppyJson = (meta: CompanyMeta) => {
+  // supported_versions lists the OTHER versions the Company serves, each at that version's document
+  // URL; the current one is protocol_version, not repeated here (spec 3.4). Omitted when there are none.
+  const others = SUPPORTED_VERSIONS.filter((v) => v !== PROTOCOL_VERSION);
+  return {
+    protocol_version: PROTOCOL_VERSION,
+    ...(others.length > 0
+      ? {
+          supported_versions: Object.fromEntries(
+            others.map((v) => [v, `${origin(meta)}/.well-known/poppy.json`]),
+          ),
+        }
+      : {}),
+    organization: { name: meta.name, domain: meta.host },
+    auth: {
+      issuer: ISSUER,
+      scopes: Object.fromEntries(meta.scopes.map((s) => [s.name, s.description])),
+      scope_hints: Object.fromEntries(
+        meta.scopes.map((s) => [s.name, { changes: s.changes, personal_data: s.personalData }]),
+      ),
+    },
+    apis: [
+      { type: "openapi", url: `${origin(meta)}/openapi.json`, description: `${meta.name} API` },
+    ],
+  };
+};
