@@ -16,6 +16,13 @@ export interface Brand {
   bg: string; // page background (hex)
 }
 
+/** Something the Company offers, shown on the storefront so a browser sees a real store. */
+export interface Offering {
+  name: string;
+  note: string; // a short line, e.g. "$240 / night"
+  detail?: string; // a descriptor, e.g. "King bed, sea-facing balcony"
+}
+
 /** What a vertical module declares about itself. */
 export interface CompanyMeta {
   /** The host this company is served on, e.g. `stays.poppysandbox.dev`. Its RFC 9728 resource identity. */
@@ -24,6 +31,8 @@ export interface CompanyMeta {
   name: string;
   scopes: Scope[];
   brand?: Brand;
+  /** What the store sells, shown on the landing. */
+  offerings?: Offering[];
 }
 
 /** Values the Poppy guard puts on the Hono context for route handlers to read. */

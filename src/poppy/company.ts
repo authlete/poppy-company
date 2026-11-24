@@ -5,7 +5,7 @@ import { OpenAPIHono, z } from "@hono/zod-openapi";
 import type { MiddlewareHandler } from "hono";
 import { ISSUER } from "../config.js";
 import { guardFor } from "./guard.js";
-import { landingPage, llmsTxt, robotsTxt, sitemapXml } from "./landing.js";
+import { apiReferencePage, landingPage, llmsTxt, robotsTxt, sitemapXml } from "./landing.js";
 import { poppyJson, protectedResource } from "./metadata.js";
 import { origin, type CompanyMeta, type Env } from "./types.js";
 
@@ -69,6 +69,13 @@ export function defineCompany(
   app.get("/llms.txt", (c) => c.text(llmsTxt(meta)));
 
   routes(app, protect);
+
+  // A browser opening the spec gets a rendered reference, not a wall of JSON; agents still get JSON.
+  app.get("/docs", (c) => c.html(apiReferencePage(meta)));
+  app.use("/openapi.json", async (c, next) => {
+    if ((c.req.header("accept") ?? "").includes("text/html")) return c.redirect("/docs");
+    await next();
+  });
 
   // OpenAPI generated from the routes above, served at /openapi.json.
   app.doc31("/openapi.json", {
