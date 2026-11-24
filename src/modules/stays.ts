@@ -67,12 +67,6 @@ export const stays = defineCompany(
         changes: "irreversible",
         personalData: true,
       },
-      {
-        name: "poppy:browser-sign-in",
-        description: "Use Stays signed in, with the other access you approve.",
-        changes: "none",
-        personalData: false,
-      },
     ],
   },
   (app, protect) => {
