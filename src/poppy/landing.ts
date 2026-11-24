@@ -75,7 +75,7 @@ const devSection = () => {
 
 const footer = (meta: CompanyMeta, brand: Brand) => `<footer><div class="wrap">
   <span class="brand">${MARK(brand.primary)}<span class="name serif" style="font-size:16px">${esc(meta.name)}</span></span>
-  <span>© 2026 ${esc(meta.name)} · A Personal Agent Protocol reference demo.</span>
+  <span>© 2026 ${esc(meta.name)} · A Personal Agent Protocol reference demo. Bookings aren't real reservations and no payment is taken.</span>
 </div></footer>`;
 
 export function landingPage(meta: CompanyMeta): string {
